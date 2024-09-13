@@ -1,0 +1,19 @@
+{
+  "token": "Address of your token",
+  "firstVault": {
+    "timelock": 1,
+    "tier": 800
+  },
+  "secondVault": {
+    "timelock": 7,
+    "tier": 1100
+  },
+  "thirdVault": {
+    "timelock": 30,
+    "tier": 1500
+  },
+  "fourthVault": {
+    "timelock": 90,
+    "tier": 2300
+  }
+}
