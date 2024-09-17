@@ -1,14 +1,24 @@
 // SPDX-License-Identifier: MIT
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./interfaces/IERC20.sol";
 
 pragma solidity ^0.8.20;
 // Author: @DuckJHN
+
+
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool); 
+    function transferFrom(address spender, address recipient, uint256 amount) external returns (bool);
+}
+
 contract VaultStaking is Ownable, ReentrancyGuard {
     IERC20 public token;
  
-    uint256 internal _minStake;
+    uint256 internal _minStake = 500 * 10 ** 18;
     uint256 internal constant BASIC_POINT = 10000;
  
     uint256 public timeLock;
@@ -92,35 +102,35 @@ contract VaultStaking is Ownable, ReentrancyGuard {
         _minStake = _newMin;
     }
  
-function stake(uint256 _amountStaking) external nonReentrant {
-    require(token.balanceOf(msg.sender) >= _amountStaking, "Insufficient balance");
-    require(token.allowance(msg.sender, address(this)) >= _amountStaking, "Insufficient allowance");
-    require(_amountStaking >= _minStake, "Amount too small");
-    uint256 amountReward = calculateReward(_amountStaking);
+    function stake(uint256 _amountStaking) external nonReentrant {
+        require(token.balanceOf(msg.sender) >= _amountStaking, "Insufficient balance");
+        require(token.allowance(msg.sender, address(this)) >= _amountStaking, "Insufficient allowance");
+        require(_amountStaking >= _minStake, "Amount too small");
+        uint256 amountReward = calculateReward(_amountStaking);
 
-    require(_poolCanStake(amountReward), "Pool is full");
+        require(_poolCanStake(amountReward), "Pool is full");
 
-    amountStaked += _amountStaking;
-    amountForReward += amountReward;
+        amountStaked += _amountStaking;
+        amountForReward += amountReward;
 
-    position[currentPositionId] = Position({
-        positionId: currentPositionId,
-        walletAddress: msg.sender,
-        createdDate: block.timestamp,
-        unlockDate: block.timestamp + (timeLock * 1 minutes),
-        percentInterest: tier,
-        amountStaked: _amountStaking,
-        amountInterest: amountReward,
-        open: true
-    });
+        position[currentPositionId] = Position({
+            positionId: currentPositionId,
+            walletAddress: msg.sender,
+            createdDate: block.timestamp,
+            unlockDate: block.timestamp + (timeLock * 1 minutes),
+            percentInterest: tier,
+            amountStaked: _amountStaking,
+            amountInterest: amountReward,
+            open: true
+        });
 
-    positionIds[msg.sender].push(currentPositionId);
-    emit Staked(msg.sender, currentPositionId, _amountStaking);
+        positionIds[msg.sender].push(currentPositionId);
+        emit Staked(msg.sender, currentPositionId, _amountStaking);
 
-    require(token.transferFrom(msg.sender, address(this), _amountStaking), "Transfer token failed");
+        require(token.transferFrom(msg.sender, address(this), _amountStaking), "Transfer token failed");
 
-    ++currentPositionId;
-}
+        ++currentPositionId;
+    }
 
  
     function claimAll() external onlyStaker nonReentrant {

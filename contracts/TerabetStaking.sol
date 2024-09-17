@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./interfaces/IERC20.sol";
 pragma solidity ^0.8.20;
+
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool); 
+    function transferFrom(address spender, address recipient, uint256 amount) external returns (bool);
+}
 
 contract StakingTerrabet is Ownable, ReentrancyGuard {
     IERC20 public token;
