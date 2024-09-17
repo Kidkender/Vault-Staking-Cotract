@@ -2,7 +2,7 @@
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 // Author: @DuckJHN
 
 
@@ -27,7 +27,7 @@ contract VaultStaking is Ownable, ReentrancyGuard {
     uint256 public amountStaked;
     uint256 public amountForReward;
  
-    constructor(IERC20 _token, uint _timeLock, uint _tier) Ownable(msg.sender) {
+    constructor(IERC20 _token, uint256 _timeLock, uint256 _tier) Ownable(msg.sender) {
         token = _token;
         timeLock = _timeLock;
         tier = _tier;
@@ -65,6 +65,7 @@ contract VaultStaking is Ownable, ReentrancyGuard {
     }
  
     function changeAddressStaking(address _token) external onlyOwner() {
+        require(_token != address(0), "Address token is not valid");
         token = IERC20(_token);
     }
  
@@ -85,13 +86,8 @@ contract VaultStaking is Ownable, ReentrancyGuard {
     }
  
     function _restAvailableAmount() internal view returns (uint256) {
-        uint rewardAmountOfPool = _getRewardAmountOfPool();
+        uint256 rewardAmountOfPool = _getRewardAmountOfPool();
         return rewardAmountOfPool > amountForReward ? rewardAmountOfPool - amountForReward : 0;
-    }
- 
-    function calculateReward(uint256 _amountStaking) internal view returns (uint256) {
-        // Reward = (Amount x Percent) x DayNumber/365
-        return (_amountStaking * tier * timeLock ) / (BASIC_POINT * 365);
     }
  
     function _poolCanStake( uint256 _amountReward) internal view returns (bool) {
@@ -106,7 +102,9 @@ contract VaultStaking is Ownable, ReentrancyGuard {
         require(token.balanceOf(msg.sender) >= _amountStaking, "Insufficient balance");
         require(token.allowance(msg.sender, address(this)) >= _amountStaking, "Insufficient allowance");
         require(_amountStaking >= _minStake, "Amount too small");
-        uint256 amountReward = calculateReward(_amountStaking);
+
+        // Reward = (Amount x Percent) x DayNumber/365
+        uint256 amountReward = (_amountStaking * tier * timeLock ) / (BASIC_POINT * 365);
 
         require(_poolCanStake(amountReward), "Pool is full");
 
